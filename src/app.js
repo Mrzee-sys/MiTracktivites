@@ -22,6 +22,15 @@ export function createApp() {
   // Logging
   if (!env.isProduction) app.use(morgan('dev'));
 
+  // Root & health check routes (for UptimeRobot / Render health checks)
+  app.get('/', (req, res) => {
+    res.status(200).json({ status: 'healthy', message: 'MiTracktivities API is running smoothly' });
+  });
+
+  app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+  });
+
   // Routes
   app.use('/api', apiRoutes);
 
