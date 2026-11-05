@@ -1,44 +1,57 @@
-import emailjs from '@emailjs/nodejs';
+import { send } from '@emailjs/nodejs';
 import { env } from '../config/env.js';
 
 const hasEmailJsConfig = Boolean(
   env.emailjsPublicKey &&
-    env.emailjsPrivateKey &&
-    env.emailjsServiceId &&
-    env.emailjsTemplateId,
+  env.emailjsPrivateKey &&
+  env.emailjsServiceId &&
+  env.emailjsTemplateId
 );
 
 /**
  * Sends the email-verification code to a newly registered user via EmailJS.
- * @param {string} to   Recipient email address.
- * @param {string} code Plain-text verification code (never persisted).
  */
 export async function sendVerificationEmail(to, code) {
+  if (!hasEmailJsConfig) {
+    console.log(`📧 [dev mailer] EmailJS keys missing — To: ${to} | Code: ${code}`);
+    return;
+  }
+
   const templateParams = {
     to_email: to,
     code: code,
   };
 
-  if (!hasEmailJsConfig) {
-    console.log(`📧 [dev mailer] EmailJS keys missing — To: ${to} | Code: ${code}`);
-    return { status: 200, text: 'dev-console-fallback' };
-  }
+  try {
+    console.log(`⏳ Sending EmailJS verification to ${to}...`);
+    
+    // 1. Correctly await the named 'send' function
+    const response = await send(
+      env.emailjsServiceId,
+      env.emailjsTemplateId,
+      templateParams,
+      {
+        publicKey: env.emailjsPublicKey,
+        privateKey: env.emailjsPrivateKey,
+      }
+    );
+    
+    console.log('✅ EmailJS Success:', response.status, response.text);
+    return response;
 
-  return emailjs.send(
-    env.emailjsServiceId,
-    env.emailjsTemplateId,
-    templateParams,
-    {
-      publicKey: env.emailjsPublicKey,
-      privateKey: env.emailjsPrivateKey,
-    },
-  );
+  } catch (error) {
+    // 2. Catch the error so it doesn't freeze the Express route
+    console.error('❌ EmailJS Error:', error.message || error);
+    
+    // Throwing ensures the auth controller catches it and returns a 500 cleanly to the frontend
+    throw new Error('Failed to send verification email'); 
+  }
 }
 
 /**
  * Temporarily disabled while focusing on the EmailJS authentication flow.
  */
 export async function sendActivityReportEmail() {
-  console.warn('⚠️ sendActivityReportEmail is currently disabled (EmailJS attachment support not configured).');
+  console.warn('⚠️ sendActivityReportEmail is currently disabled.');
   return;
 }
