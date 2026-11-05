@@ -1,13 +1,4 @@
-import { send, init } from '@emailjs/nodejs';
 import { env } from '../config/env.js';
-
-// 1. Force the SDK to initialize globally with your keys immediately
-if (env.emailjsPublicKey && env.emailjsPrivateKey) {
-  init({
-    publicKey: env.emailjsPublicKey,
-    privateKey: env.emailjsPrivateKey,
-  });
-}
 
 const hasEmailJsConfig = Boolean(
   env.emailjsPublicKey &&
@@ -22,24 +13,34 @@ export async function sendVerificationEmail(to, code) {
     return;
   }
 
-  const templateParams = {
-    to_email: to,
-    code: code,
-  };
-
   try {
-    console.log(`⏳ Sending EmailJS verification to ${to}...`);
+    console.log(`⏳ Sending EmailJS verification via REST API to ${to}...`);
     
-    // 2. Call send() with only 3 arguments (Service ID, Template ID, Params)
-    // It will automatically pull the Private Key from the global init() above.
-    const response = await send(
-      env.emailjsServiceId,
-      env.emailjsTemplateId,
-      templateParams
-    );
+    // Bypassing the buggy SDK to hit the EmailJS REST API directly
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        service_id: env.emailjsServiceId,
+        template_id: env.emailjsTemplateId,
+        user_id: env.emailjsPublicKey,      // The REST API expects the Public Key here
+        accessToken: env.emailjsPrivateKey, // The REST API expects the Private Key here
+        template_params: {
+          to_email: to,
+          code: code,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`EmailJS responded with ${response.status}: ${errorText}`);
+    }
     
-    console.log('✅ EmailJS Success:', response.status, response.text);
-    return response;
+    console.log('✅ EmailJS REST API Success');
+    return true;
 
   } catch (error) {
     console.error('❌ EmailJS Error:', error.message || error);
