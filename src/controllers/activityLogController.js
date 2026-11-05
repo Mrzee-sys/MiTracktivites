@@ -15,7 +15,7 @@ export async function createLog(req, res) {
     throw ApiError.badRequest('Request body must be a JSON object');
   }
 
-  const { activityName, sessionType, durationMinutes, coachOnDuty, notes, date } = body;
+  const { activityName, sessionType, durationMinutes, startTime, endTime, coachOnDuty, notes, date } = body;
 
   let parsedDate;
   if (date !== undefined) {
@@ -32,6 +32,8 @@ export async function createLog(req, res) {
     activityName,
     sessionType,
     durationMinutes,
+    ...(typeof startTime === 'string' && startTime.trim() && { startTime: startTime.trim() }),
+    ...(typeof endTime === 'string' && endTime.trim() && { endTime: endTime.trim() }),
     ...(typeof coachOnDuty === 'string' && coachOnDuty.trim() && { coachOnDuty: coachOnDuty.trim() }),
     ...(typeof notes === 'string' && notes.trim() && { notes }),
     ...(parsedDate && { date: parsedDate }),

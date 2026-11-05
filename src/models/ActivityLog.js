@@ -32,6 +32,14 @@ const activityLogSchema = new mongoose.Schema(
       max: [MAX_DURATION_MINUTES, `durationMinutes cannot exceed ${MAX_DURATION_MINUTES}`],
       validate: { validator: Number.isInteger, message: 'durationMinutes must be a whole number' },
     },
+    startTime: {
+      type: String,
+      trim: true,
+    },
+    endTime: {
+      type: String,
+      trim: true,
+    },
     coachOnDuty: {
       type: String,
       trim: true,
