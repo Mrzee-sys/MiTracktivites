@@ -1,5 +1,13 @@
-import { send } from '@emailjs/nodejs';
+import { send, init } from '@emailjs/nodejs';
 import { env } from '../config/env.js';
+
+// 1. Force the SDK to initialize globally with your keys immediately
+if (env.emailjsPublicKey && env.emailjsPrivateKey) {
+  init({
+    publicKey: env.emailjsPublicKey,
+    privateKey: env.emailjsPrivateKey,
+  });
+}
 
 const hasEmailJsConfig = Boolean(
   env.emailjsPublicKey &&
@@ -8,9 +16,6 @@ const hasEmailJsConfig = Boolean(
   env.emailjsTemplateId
 );
 
-/**
- * Sends the email-verification code to a newly registered user via EmailJS.
- */
 export async function sendVerificationEmail(to, code) {
   if (!hasEmailJsConfig) {
     console.log(`📧 [dev mailer] EmailJS keys missing — To: ${to} | Code: ${code}`);
@@ -25,32 +30,23 @@ export async function sendVerificationEmail(to, code) {
   try {
     console.log(`⏳ Sending EmailJS verification to ${to}...`);
     
-    // 1. Correctly await the named 'send' function
+    // 2. Call send() with only 3 arguments (Service ID, Template ID, Params)
+    // It will automatically pull the Private Key from the global init() above.
     const response = await send(
       env.emailjsServiceId,
       env.emailjsTemplateId,
-      templateParams,
-      {
-        publicKey: env.emailjsPublicKey,
-        privateKey: env.emailjsPrivateKey,
-      }
+      templateParams
     );
     
     console.log('✅ EmailJS Success:', response.status, response.text);
     return response;
 
   } catch (error) {
-    // 2. Catch the error so it doesn't freeze the Express route
     console.error('❌ EmailJS Error:', error.message || error);
-    
-    // Throwing ensures the auth controller catches it and returns a 500 cleanly to the frontend
     throw new Error('Failed to send verification email'); 
   }
 }
 
-/**
- * Temporarily disabled while focusing on the EmailJS authentication flow.
- */
 export async function sendActivityReportEmail() {
   console.warn('⚠️ sendActivityReportEmail is currently disabled.');
   return;
