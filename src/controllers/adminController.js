@@ -66,7 +66,7 @@ export async function emailAdminReport(req, res) {
     });
   } catch (err) {
     console.error('📧 Failed to send admin PDF report:', err);
-    throw new ApiError(502, 'Could not send the report email. Please check your SMTP configuration.');
+    throw new ApiError(502, 'Could not send the report email. Please check your Resend configuration.');
   }
 
   res.json({

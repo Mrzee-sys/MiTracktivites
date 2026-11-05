@@ -1,40 +1,46 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env.js';
 
 /**
- * Mailer service.
- * - When SMTP_HOST is configured, mail is sent through that SMTP server.
- * - Otherwise (development only) mail is not sent; the message is logged to the
- *   console so the verification flow can be tested without an SMTP account.
+ * Mailer service powered by the Resend SDK (HTTPS API, bypassing SMTP port blocks).
+ * - When `env.resendApiKey` is configured, mail is sent through Resend.
+ * - Otherwise (local development fallback), the email payload is logged to the
+ *   console so verification codes and PDF reports can be tested without an API key.
  */
-const hasSmtp = Boolean(env.smtp.host);
+const hasResendKey = Boolean(env.resendApiKey);
 
-if (!hasSmtp && env.isProduction) {
-  throw new Error('SMTP_HOST must be configured in production to send verification emails');
+if (!hasResendKey && env.isProduction) {
+  console.warn('⚠️ RESEND_API_KEY is not set in production — emails will only be logged to the console.');
 }
 
-const transporter = hasSmtp
-  ? nodemailer.createTransport({
-      host: env.smtp.host,
-      port: env.smtp.port,
-      secure: env.smtp.secure,
-      auth: env.smtp.user ? { user: env.smtp.user, pass: env.smtp.pass } : undefined,
-    })
-  : nodemailer.createTransport({ jsonTransport: true });
+const resend = hasResendKey ? new Resend(env.resendApiKey) : null;
 
 async function sendMail({ to, subject, text, html, attachments }) {
-  const info = await transporter.sendMail({
+  const payload = {
     from: env.mailFrom,
     to,
     subject,
     text,
     html,
     ...(attachments && { attachments }),
-  });
-  if (!hasSmtp) {
-    console.log(`📧 [dev mailer] To: ${to} | Subject: ${subject}\n${text}`);
+  };
+
+  if (!resend) {
+    console.log(`📧 [dev mailer] To: ${to} | From: ${payload.from} | Subject: ${subject}\n${text}`);
+    if (attachments?.length) {
+      console.log(
+        `📎 [dev mailer] Attachments:`,
+        attachments.map((a) => ({ filename: a.filename, contentType: a.contentType, sizeChars: a.content?.length })),
+      );
+    }
+    return { id: 'dev-console-fallback', payload };
   }
-  return info;
+
+  const { data, error } = await resend.emails.send(payload);
+  if (error) {
+    throw new Error(error.message || 'Resend failed to send email');
+  }
+  return data;
 }
 
 const escapeHtml = (value) =>
@@ -79,7 +85,7 @@ export function sendVerificationEmail(to, code) {
  * @param {string} [options.filename] Attachment filename.
  */
 export function sendActivityReportEmail({ to, pdfBase64, filename = 'MiTracktivities-Report.pdf' }) {
-  // Strip optional data URI prefix (`data:application/pdf;base64,`) so Nodemailer receives pure base64
+  // Strip optional data URI prefix (`data:application/pdf;base64,`) so Resend receives pure base64
   const base64Content = String(pdfBase64).replace(/^data:application\/pdf;[^,]*base64,/, '');
 
   return sendMail({
@@ -97,10 +103,8 @@ export function sendActivityReportEmail({ to, pdfBase64, filename = 'MiTracktivi
       {
         filename,
         content: base64Content,
-        encoding: 'base64',
         contentType: 'application/pdf',
       },
     ],
   });
 }
-

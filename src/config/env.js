@@ -13,8 +13,6 @@ if (process.env.JWT_SECRET.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters long');
 }
 
-const smtpPort = Number(process.env.SMTP_PORT) || 587;
-
 export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isProduction: process.env.NODE_ENV === 'production',
@@ -27,13 +25,7 @@ export const env = Object.freeze({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   verificationCodeTtlMinutes: Number(process.env.VERIFICATION_CODE_TTL_MINUTES) || 15,
 
-  // Mail (all optional in development — codes are logged to the console instead)
-  smtp: Object.freeze({
-    host: process.env.SMTP_HOST,
-    port: smtpPort,
-    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : smtpPort === 465,
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  }),
-  mailFrom: process.env.MAIL_FROM ?? 'MiTracktivities <no-reply@mitracktivities.app>',
+  // Mail (Resend SDK — optional in development; payloads are logged to the console if missing)
+  resendApiKey: process.env.RESEND_API_KEY,
+  mailFrom: process.env.MAIL_FROM || 'onboarding@resend.dev',
 });
