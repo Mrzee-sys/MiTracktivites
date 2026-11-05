@@ -25,7 +25,9 @@ export const env = Object.freeze({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   verificationCodeTtlMinutes: Number(process.env.VERIFICATION_CODE_TTL_MINUTES) || 15,
 
-  // Mail (Resend SDK — optional in development; payloads are logged to the console if missing)
-  resendApiKey: process.env.RESEND_API_KEY,
-  mailFrom: process.env.MAIL_FROM || 'onboarding@resend.dev',
+  // EmailJS (HTTPS API — bypasses Render SMTP port blocks)
+  emailjsPublicKey: process.env.EMAILJS_PUBLIC_KEY,
+  emailjsPrivateKey: process.env.EMAILJS_PRIVATE_KEY,
+  emailjsServiceId: process.env.EMAILJS_SERVICE_ID,
+  emailjsTemplateId: process.env.EMAILJS_TEMPLATE_ID,
 });

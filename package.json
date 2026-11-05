@@ -9,6 +9,7 @@
     "start": "node src/server.js"
   },
   "dependencies": {
+    "@emailjs/nodejs": "^5.0.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
@@ -16,8 +17,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.15.0",
-    "morgan": "^1.10.0",
-    "resend": "^6.37.0"
+    "morgan": "^1.10.0"
   },
   "engines": {
     "node": ">=20.0.0"
