@@ -6,6 +6,7 @@ import activityRoutes from './activityRoutes.js';
 import sessionRoutes from './sessionRoutes.js';
 import activityLogRoutes from './activityLogRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import eventRoutes from './eventRoutes.js';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/activities', activityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/logs', activityLogRoutes);
 router.use('/admin', adminRoutes);
+router.use('/events', eventRoutes);
 
 export default router;
