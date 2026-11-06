@@ -41,6 +41,11 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    avatarUrl: {
+      type: String,
+      maxlength: [300000, 'Avatar image is too large'],
+      default: '',
+    },
     verification: {
       type: verificationSchema,
       select: false,

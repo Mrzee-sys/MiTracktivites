@@ -24,6 +24,7 @@ const authResponse = (user) => ({
     email: user.email,
     isVerified: user.isVerified,
     userRightId: user.userRightId ?? 0,
+    avatarUrl: user.avatarUrl || '',
   },
 });
 
@@ -181,6 +182,38 @@ export async function me(req, res) {
       email: user.email,
       isVerified: user.isVerified,
       userRightId: user.userRightId ?? 0,
+      avatarUrl: user.avatarUrl || '',
+    },
+  });
+}
+
+/** PATCH /api/auth/avatar — updates the authenticated user's profile picture. */
+export async function updateAvatar(req, res) {
+  const { avatarUrl } = req.body ?? {};
+  if (typeof avatarUrl !== 'string' || !avatarUrl.startsWith('data:image/')) {
+    throw ApiError.badRequest('Please provide a valid image');
+  }
+  if (avatarUrl.length > 300_000) {
+    throw ApiError.badRequest('Image is too large. Please choose a smaller photo.');
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { avatarUrl },
+    { new: true, runValidators: true },
+  ).lean();
+
+  if (!user) throw new ApiError(401, 'Invalid or expired session');
+
+  res.json({
+    success: true,
+    message: 'Profile picture updated',
+    data: {
+      id: user._id,
+      email: user.email,
+      isVerified: user.isVerified,
+      userRightId: user.userRightId ?? 0,
+      avatarUrl: user.avatarUrl || '',
     },
   });
 }

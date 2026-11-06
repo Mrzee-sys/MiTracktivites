@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import { login, me, register, resendCode, verify } from '../controllers/authController.js';
+import { login, me, register, resendCode, updateAvatar, verify } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -19,6 +19,7 @@ router.post('/verify', authLimiter, verify);
 router.post('/login', authLimiter, login);
 router.post('/resend', authLimiter, resendCode);
 router.get('/me', requireAuth, me);
+router.patch('/avatar', requireAuth, updateAvatar);
 
 export default router;
 
